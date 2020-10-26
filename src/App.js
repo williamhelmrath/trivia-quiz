@@ -10,11 +10,11 @@ export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [permNumQuestions, setPermNumQuestions] = useState(0);
 
-  const handleChange = value => {
+  const handleChange = (value) => {
     if (value) setNumQuestions(value);
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (numQuestions > 50 || numQuestions < 1)
       alert("Please choose a value between 1 and 50.");
@@ -26,8 +26,8 @@ export default function App() {
 
   useEffect(() => {
     fetch("https://opentdb.com/api.php?amount=" + permNumQuestions)
-      .then(res => res.json())
-      .then(res => {
+      .then((res) => res.json())
+      .then((res) => {
         const questions = res.results;
         setData(questions);
       });
@@ -45,7 +45,7 @@ export default function App() {
             type="number"
             id="numQ"
             name="numQ"
-            onChange={e => handleChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
           />
           <br />
         </form>
@@ -55,14 +55,14 @@ export default function App() {
 
   return (
     <div className="App">
-      {data.map(question => (
+      {data.map((question) => (
         <Question
           key={question.question}
           questionText={question.question}
           answers={question.incorrect_answers}
           correctAnswer={question.correct_answer}
           difficulty={question.difficulty}
-        ></Question>
+        />
       ))}
     </div>
   );
@@ -95,13 +95,13 @@ function Question({ questionText, answers, correctAnswer, difficulty }) {
           backgroundColor: bgColor,
           color: "white",
           padding: "2vh",
-          fontSize: "150%"
+          fontSize: "150%",
         }}
       >
         {he.decode(questionText)}
       </Paper>
       <Grid container spacing={1}>
-        {answers.map(answer => (
+        {answers.map((answer) => (
           <Grid item xs={6} key={answer}>
             {" "}
             <AnswerButton
@@ -119,7 +119,7 @@ function AnswerButton({ isCorrect, answerText }) {
   const [textColor, setTextColor] = useState(null);
   const [disabled, setDisabled] = useState(false);
 
-  const handleClick = e => {
+  const handleClick = () => {
     isCorrect ? setTextColor("green") : setTextColor("red");
     setDisabled(true);
   };
@@ -129,7 +129,7 @@ function AnswerButton({ isCorrect, answerText }) {
       <Button
         variant="contained"
         style={{ color: textColor, padding: "2vh", fontSize: "100%" }}
-        onClick={e => handleClick()}
+        onClick={handleClick}
         disabled={disabled}
       >
         {answerText}
