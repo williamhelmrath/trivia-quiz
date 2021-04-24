@@ -1,139 +1,77 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import { Grid, Paper, Button } from "@material-ui/core";
-
-let he = require("he");
+import React, { useState } from "react";
+import { Input, Button } from "@material-ui/core";
+import Question from "./Question";
 
 export default function App() {
-  const [data, setData] = useState(null);
-  const [numQuestions, setNumQuestions] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
-  const [permNumQuestions, setPermNumQuestions] = useState(0);
+  const [questions, setQuestions] = useState([]);
+  const [numQuestions, setNumQuestions] = useState(10);
+  const [numAnswered, setNumAnswered] = useState(0);
 
-  const handleChange = (value) => {
-    if (value) setNumQuestions(value);
+  console.log(numQuestions);
+
+  const handleChange = (e) => {
+    setNumQuestions(e.target.value);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (numQuestions > 50 || numQuestions < 1)
-      alert("Please choose a value between 1 and 50.");
-    else {
-      setPermNumQuestions(numQuestions);
-      setSubmitted(true);
-    }
-  };
-
-  useEffect(() => {
-    fetch("https://opentdb.com/api.php?amount=" + permNumQuestions)
+  const fetchQuestions = () => {
+    fetch("https://opentdb.com/api.php?amount=" + numQuestions)
       .then((res) => res.json())
       .then((res) => {
-        const questions = res.results;
-        setData(questions);
-      });
-  }, [permNumQuestions]);
+        const questions = res.results.map((question) => {
+          let answers;
 
-  if (!submitted) {
+          if (question.type === "boolean") {
+            answers = ["True", "False"];
+          } else {
+            answers = [...question.incorrect_answers];
+            const rand = Math.floor(Math.random() * 3);
+
+            answers.splice(rand, 0, question.correct_answer);
+          }
+
+          return { ...question, answers };
+        });
+
+        setQuestions(questions);
+      });
+
+    setNumAnswered(0);
+  };
+
+  if (questions.length === 0) {
     return (
-      <div className="App">
-        <form onSubmit={handleSubmit} style={{ padding: "2vh" }}>
-          <label style={{ fontSize: "3vh" }} htmlFor="numQ">
-            Number of Questions:
-          </label>
-          <br />
-          <input
-            type="number"
-            id="numQ"
-            name="numQ"
-            onChange={(e) => handleChange(e.target.value)}
-          />
-          <br />
-        </form>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Input type="number" value={numQuestions} onChange={handleChange} />
+        <Button onClick={fetchQuestions}>Go!</Button>
       </div>
     );
   }
 
   return (
-    <div className="App">
-      {data.map((question) => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      {questions.map((q) => (
         <Question
-          key={question.question}
-          questionText={question.question}
-          answers={question.incorrect_answers}
-          correctAnswer={question.correct_answer}
-          difficulty={question.difficulty}
+          question={q}
+          setNumAnswered={setNumAnswered}
+          key={q.question}
         />
       ))}
-    </div>
-  );
-}
 
-function Question({ questionText, answers, correctAnswer, difficulty }) {
-  const [bgColor, setBgColor] = useState(null);
-
-  //Color palette from https://www.color-hex.com/color-palette/88277
-  useEffect(() => {
-    switch (difficulty) {
-      case "easy":
-        setBgColor("#8ca405");
-        break;
-      case "medium":
-        setBgColor("#f3b900");
-        break;
-      default:
-        setBgColor("#bd3100");
-    }
-
-    const rand = Math.floor(Math.random() * 3);
-    answers.splice(rand, 0, correctAnswer);
-  }, [difficulty, correctAnswer, answers]);
-
-  return (
-    <div className="Question">
-      <Paper
-        style={{
-          backgroundColor: bgColor,
-          color: "white",
-          padding: "2vh",
-          fontSize: "150%",
-        }}
-      >
-        {he.decode(questionText)}
-      </Paper>
-      <Grid container spacing={1}>
-        {answers.map((answer) => (
-          <Grid item xs={6} key={answer}>
-            {" "}
-            <AnswerButton
-              isCorrect={answer === correctAnswer}
-              answerText={he.decode(answer)}
-            />
-          </Grid>
-        ))}
-      </Grid>
-    </div>
-  );
-}
-
-function AnswerButton({ isCorrect, answerText }) {
-  const [textColor, setTextColor] = useState(null);
-  const [disabled, setDisabled] = useState(false);
-
-  const handleClick = () => {
-    isCorrect ? setTextColor("green") : setTextColor("red");
-    setDisabled(true);
-  };
-
-  return (
-    <div className="Answer">
-      <Button
-        variant="contained"
-        style={{ color: textColor, padding: "2vh", fontSize: "100%" }}
-        onClick={handleClick}
-        disabled={disabled}
-      >
-        {answerText}
-      </Button>
+      {numAnswered === parseInt(numQuestions) && (
+        <Button onClick={fetchQuestions}>Fetch more questions</Button>
+      )}
     </div>
   );
 }
